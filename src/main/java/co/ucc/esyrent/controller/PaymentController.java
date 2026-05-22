@@ -26,13 +26,13 @@ public class PaymentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT')")
+    @PreAuthorize("@securityAccessService.canRegisterPayment(#request.contractId(), authentication)")
     public ResponseEntity<PaymentResponse> registerPayment(@Valid @RequestBody RegisterPaymentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.registerPayment(request));
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessPaymentsByContract(#contractId, authentication)")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByContract(@RequestParam Long contractId) {
         return ResponseEntity.ok(paymentService.getPaymentsByContract(contractId));
     }

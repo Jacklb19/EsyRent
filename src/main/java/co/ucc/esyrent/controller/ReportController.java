@@ -10,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,13 +23,13 @@ public class ReportController {
     }
 
     @GetMapping("/payments")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canAccessPaymentReport(#filter, authentication)")
     public ResponseEntity<List<PaymentReportResponse>> generatePaymentReport(@ModelAttribute ReportFilter filter) {
         return ResponseEntity.ok(reportService.generatePaymentReport(filter));
     }
 
     @GetMapping("/monthly-income")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canAccessMonthlyIncomeReport(#filter, authentication)")
     public ResponseEntity<List<MonthlyIncomeResponse>> generateMonthlyIncomeReport(
             @ModelAttribute ReportFilter filter) {
         return ResponseEntity.ok(reportService.generateMonthlyIncomeReport(filter));

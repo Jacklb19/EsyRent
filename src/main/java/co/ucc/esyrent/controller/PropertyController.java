@@ -29,7 +29,7 @@ public class PropertyController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canCreateProperty(#request.ownerId(), authentication)")
     public ResponseEntity<PropertyResponse> createProperty(@Valid @RequestBody CreatePropertyRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(propertyService.createProperty(request));
     }
@@ -50,7 +50,7 @@ public class PropertyController {
     }
 
     @PutMapping("/{propertyId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canManageProperty(#propertyId, authentication)")
     public ResponseEntity<PropertyResponse> updateProperty(@PathVariable Long propertyId,
                                                            @Valid @RequestBody UpdatePropertyRequest request) {
         return ResponseEntity.ok(propertyService.updateProperty(propertyId, request));

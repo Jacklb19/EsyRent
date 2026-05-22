@@ -28,20 +28,20 @@ public class MaintenanceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canCreateMaintenance(#request.contractId(), authentication)")
     public ResponseEntity<MaintenanceResponse> createMaintenanceRequest(
             @Valid @RequestBody CreateMaintenanceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(maintenanceService.createMaintenanceRequest(request));
     }
 
     @PutMapping("/{maintenanceRequestId}/advance")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canAdvanceMaintenance(#maintenanceRequestId, authentication)")
     public ResponseEntity<MaintenanceResponse> advanceStatus(@PathVariable Long maintenanceRequestId) {
         return ResponseEntity.ok(maintenanceService.advanceStatus(maintenanceRequestId));
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessMaintenanceByContract(#contractId, authentication)")
     public ResponseEntity<List<MaintenanceResponse>> getByContract(@RequestParam Long contractId) {
         return ResponseEntity.ok(maintenanceService.getByContract(contractId));
     }

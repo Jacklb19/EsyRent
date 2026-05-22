@@ -29,19 +29,19 @@ public class ContractController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canManageContractCreation(#request.propertyId(), authentication)")
     public ResponseEntity<ContractResponse> createContract(@Valid @RequestBody CreateContractRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(contractService.createContract(request));
     }
 
     @GetMapping("/{contractId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessContract(#contractId, authentication)")
     public ResponseEntity<ContractResponse> getContractById(@PathVariable Long contractId) {
         return ResponseEntity.ok(contractService.getContractById(contractId));
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canQueryContracts(#tenantId, #propertyId, authentication)")
     public ResponseEntity<List<ContractResponse>> getContracts(@RequestParam(required = false) Long tenantId,
                                                                @RequestParam(required = false) Long propertyId) {
         if (tenantId != null) {
@@ -54,7 +54,7 @@ public class ContractController {
     }
 
     @PutMapping("/{contractId}/cancel")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @PreAuthorize("@securityAccessService.canManageContract(#contractId, authentication)")
     public ResponseEntity<ContractResponse> cancelContract(@PathVariable Long contractId,
                                                            @Valid @RequestBody CancelContractRequest request) {
         return ResponseEntity.ok(contractService.cancelContract(contractId, request));

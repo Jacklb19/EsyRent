@@ -39,13 +39,13 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@securityAccessService.canAccessUser(#userId, authentication)")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getUserById(userId));
     }
 
     @PutMapping("/{userId}/profile")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessUser(#userId, authentication)")
     public ResponseEntity<UserResponse> updateProfile(@PathVariable Long userId,
                                                       @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateProfile(userId, request));

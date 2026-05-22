@@ -27,25 +27,25 @@ public class FileController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'TENANT')")
+    @PreAuthorize("@securityAccessService.canUploadFile(#request, authentication)")
     public ResponseEntity<FileResponse> upload(@Valid @ModelAttribute UploadFileRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(fileStorageService.upload(request));
     }
 
     @GetMapping(params = "propertyId")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessFilesForProperty(#propertyId, authentication)")
     public ResponseEntity<List<FileResponse>> getFilesForProperty(@RequestParam Long propertyId) {
         return ResponseEntity.ok(fileStorageService.getFilesForProperty(propertyId));
     }
 
     @GetMapping(params = "contractId")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessFilesForContract(#contractId, authentication)")
     public ResponseEntity<List<FileResponse>> getFilesForContract(@RequestParam Long contractId) {
         return ResponseEntity.ok(fileStorageService.getFilesForContract(contractId));
     }
 
     @GetMapping(params = "maintenanceRequestId")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityAccessService.canAccessFilesForMaintenance(#maintenanceRequestId, authentication)")
     public ResponseEntity<List<FileResponse>> getFilesForMaintenance(@RequestParam Long maintenanceRequestId) {
         return ResponseEntity.ok(fileStorageService.getFilesForMaintenance(maintenanceRequestId));
     }
