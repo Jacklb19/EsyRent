@@ -83,6 +83,10 @@ public class Payment extends BaseEntity {
         return paymentDate;
     }
 
+    public Contract getContract() {
+        return contract;
+    }
+
     public PaymentStatus getStatus() {
         return status;
     }
