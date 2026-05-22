@@ -5,7 +5,9 @@ import co.ucc.esyrent.domain.valueobject.PaymentCutoff;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DailyRateLateFeeStrategy implements LateFeeStrategy {
 
     private static final BigDecimal DAILY_RATE = new BigDecimal("0.001");
