@@ -7,8 +7,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,11 +26,13 @@ public class PaymentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT')")
     public ResponseEntity<PaymentResponse> registerPayment(@Valid @RequestBody RegisterPaymentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.registerPayment(request));
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByContract(@RequestParam Long contractId) {
         return ResponseEntity.ok(paymentService.getPaymentsByContract(contractId));
     }

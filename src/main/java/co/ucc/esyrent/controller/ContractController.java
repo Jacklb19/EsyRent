@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,16 +29,19 @@ public class ContractController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<ContractResponse> createContract(@Valid @RequestBody CreateContractRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(contractService.createContract(request));
     }
 
     @GetMapping("/{contractId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ContractResponse> getContractById(@PathVariable Long contractId) {
         return ResponseEntity.ok(contractService.getContractById(contractId));
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ContractResponse>> getContracts(@RequestParam(required = false) Long tenantId,
                                                                @RequestParam(required = false) Long propertyId) {
         if (tenantId != null) {
@@ -50,6 +54,7 @@ public class ContractController {
     }
 
     @PutMapping("/{contractId}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<ContractResponse> cancelContract(@PathVariable Long contractId,
                                                            @Valid @RequestBody CancelContractRequest request) {
         return ResponseEntity.ok(contractService.cancelContract(contractId, request));

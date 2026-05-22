@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,17 +28,20 @@ public class MaintenanceController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TENANT', 'OWNER')")
     public ResponseEntity<MaintenanceResponse> createMaintenanceRequest(
             @Valid @RequestBody CreateMaintenanceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(maintenanceService.createMaintenanceRequest(request));
     }
 
     @PutMapping("/{maintenanceRequestId}/advance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<MaintenanceResponse> advanceStatus(@PathVariable Long maintenanceRequestId) {
         return ResponseEntity.ok(maintenanceService.advanceStatus(maintenanceRequestId));
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<MaintenanceResponse>> getByContract(@RequestParam Long contractId) {
         return ResponseEntity.ok(maintenanceService.getByContract(contractId));
     }
