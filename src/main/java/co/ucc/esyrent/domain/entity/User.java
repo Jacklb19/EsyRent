@@ -58,6 +58,10 @@ public class User extends BaseEntity {
         return email;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
     public String getPhone() {
         return phone;
     }
