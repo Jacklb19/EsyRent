@@ -8,6 +8,7 @@ import java.security.Key;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,11 +26,15 @@ public class JwtProvider {
     public String generateToken(Authentication authentication) {
         org.springframework.security.core.userdetails.User principal =
                 (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+        return generateToken(principal);
+    }
+
+    public String generateToken(UserDetails userDetails) {
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + expirationMillis);
 
         return Jwts.builder()
-                .subject(principal.getUsername())
+                .subject(userDetails.getUsername())
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(signingKey)

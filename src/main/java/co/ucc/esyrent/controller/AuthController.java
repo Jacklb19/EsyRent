@@ -1,6 +1,7 @@
 package co.ucc.esyrent.controller;
 
 import co.ucc.esyrent.dto.request.LoginRequest;
+import co.ucc.esyrent.dto.request.RefreshTokenRequest;
 import co.ucc.esyrent.dto.response.AuthResponse;
 import co.ucc.esyrent.service.AuthService;
 import jakarta.validation.Valid;
@@ -23,5 +24,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 }
