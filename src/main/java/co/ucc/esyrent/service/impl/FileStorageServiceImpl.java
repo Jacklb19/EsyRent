@@ -7,6 +7,7 @@ import co.ucc.esyrent.domain.entity.Property;
 import co.ucc.esyrent.domain.enums.AttachmentType;
 import co.ucc.esyrent.domain.valueobject.AttachmentMetadata;
 import co.ucc.esyrent.dto.request.UploadFileRequest;
+import co.ucc.esyrent.dto.response.FileDownload;
 import co.ucc.esyrent.dto.response.FileResponse;
 import co.ucc.esyrent.exception.BusinessRuleException;
 import co.ucc.esyrent.exception.ResourceNotFoundException;
@@ -26,6 +27,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -92,6 +95,71 @@ public class FileStorageServiceImpl implements FileStorageService {
                 .toList();
     }
 
+    @Override
+    public FileDownload loadFileContent(String storagePath) {
+        if (storagePath == null || storagePath.isBlank()) {
+            throw new BusinessRuleException("Storage path is required");
+        }
+
+        if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+            throw new BusinessRuleException("Use public URL directly for remote files");
+        }
+
+        Attachment attachment = attachmentRepository.findByMetadataStoragePath(storagePath.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("File was not found"));
+
+        return buildDownload(attachment);
+    }
+
+    @Override
+    public FileDownload loadFileContentById(Long attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("File with id " + attachmentId + " was not found"));
+        return buildDownload(attachment);
+    }
+
+    private FileDownload buildDownload(Attachment attachment) {
+        String storagePath = attachment.getMetadata().getStoragePath();
+        if (storagePath != null && (storagePath.startsWith("http://") || storagePath.startsWith("https://"))) {
+            throw new BusinessRuleException("Remote file must be loaded from its public URL");
+        }
+
+        Path filePath = resolveReadablePath(storagePath);
+        Resource resource = new FileSystemResource(filePath);
+        if (!resource.exists() || !resource.isReadable()) {
+            throw new ResourceNotFoundException("File content is not available on disk");
+        }
+
+        return new FileDownload(
+                resource,
+                attachment.getMetadata().getContentType(),
+                attachment.getMetadata().getFileName()
+        );
+    }
+
+    private Path resolveReadablePath(String storagePath) {
+        Path filePath = isAbsoluteStoragePath(storagePath)
+                ? Paths.get(storagePath).toAbsolutePath().normalize()
+                : storageRoot.resolve(storagePath).normalize();
+
+        if (!filePath.startsWith(storageRoot)) {
+            throw new BusinessRuleException("Invalid storage path");
+        }
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new ResourceNotFoundException("File was not found on storage");
+        }
+        return filePath;
+    }
+
+    private boolean isAbsoluteStoragePath(String storagePath) {
+        if (storagePath == null || storagePath.isBlank()) {
+            return false;
+        }
+        return storagePath.contains(":")
+                || storagePath.startsWith("/")
+                || storagePath.startsWith("\\\\");
+    }
+
     private void validateUploadRequest(UploadFileRequest request) {
         if (request.file().isEmpty()) {
             throw new BusinessRuleException("Uploaded file cannot be empty");
@@ -127,7 +195,7 @@ public class FileStorageServiceImpl implements FileStorageService {
                 throw new BusinessRuleException("Invalid storage path");
             }
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            return targetPath.toString();
+            return uniqueName;
         } catch (IOException exception) {
             throw new BusinessRuleException("File could not be stored: " + exception.getMessage());
         }

@@ -103,4 +103,16 @@ public class Attachment extends BaseEntity {
     public LocalDateTime getUploadedAt() {
         return uploadedAt;
     }
+
+    public Property getProperty() {
+        return property;
+    }
+
+    public Contract getContract() {
+        return contract;
+    }
+
+    public MaintenanceRequest getMaintenanceRequest() {
+        return maintenanceRequest;
+    }
 }

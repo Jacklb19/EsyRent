@@ -2,6 +2,7 @@ package co.ucc.esyrent.service.impl;
 
 import co.ucc.esyrent.domain.entity.Property;
 import co.ucc.esyrent.domain.entity.User;
+import co.ucc.esyrent.domain.enums.PropertyStatus;
 import co.ucc.esyrent.domain.valueobject.MoneyAmount;
 import co.ucc.esyrent.dto.request.CreatePropertyRequest;
 import co.ucc.esyrent.dto.request.UpdatePropertyRequest;
@@ -61,6 +62,21 @@ public class PropertyServiceImpl implements PropertyService {
     public List<PropertyResponse> getPropertiesByOwner(Long ownerId) {
         User owner = findUserById(ownerId);
         return propertyRepository.findByOwner(owner).stream()
+                .map(propertyMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<PropertyResponse> getPropertiesByStatus(PropertyStatus status) {
+        return propertyRepository.findByStatus(status).stream()
+                .map(propertyMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<PropertyResponse> getPropertiesByOwnerAndStatus(Long ownerId, PropertyStatus status) {
+        User owner = findUserById(ownerId);
+        return propertyRepository.findByOwnerAndStatus(owner, status).stream()
                 .map(propertyMapper::toResponse)
                 .toList();
     }

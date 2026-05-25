@@ -58,6 +58,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponse> getTenants() {
+        return userRepository.findByRole(co.ucc.esyrent.domain.enums.UserRole.TENANT).stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public UserResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = findUserById(userId);

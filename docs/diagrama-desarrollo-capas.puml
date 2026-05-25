@@ -1,0 +1,55 @@
+@startuml diagrama-desarrollo-capas-esyrent
+' Vista resumida — ideal para informe / diapositiva (máxima legibilidad)
+
+title Diagrama de Desarrollo — Vista por Capas (UML)\nEsyRent Backend
+
+top to bottom direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundcorner 8
+
+skinparam package {
+  FontStyle bold
+  FontSize 13
+}
+
+actor "Cliente REST\n(Angular)" as Cliente #BBDEFB
+
+rectangle "Capa de Presentación\n• 9 Controllers REST\n• Validación @Valid\n• @PreAuthorize" as CAP_PRES #E3F2FD
+
+rectangle "Capa de Aplicación\n• Services + Impl\n• Mappers (DTO ↔ Dominio)\n• ContractLifecycleJob" as CAP_APP #C8E6C9
+
+rectangle "Capa DTO\n• request / response\n• Sin lógica de negocio" as CAP_DTO #E1BEE7
+
+rectangle "Infraestructura\n• Security (JWT, filtros)\n• CorsConfig\n• GlobalExceptionHandler" as CAP_INFRA #FFE0B2
+
+rectangle "Capa de Persistencia\n• 8 Repositories JPA" as CAP_PERS #CFD8DC
+
+rectangle "Capa de Dominio\n• Entidades · Value Objects · Enums\n• State · Strategy · Factory" as CAP_DOM #FFF9C4
+
+database "PostgreSQL" as DB #90A4AE
+
+Cliente -down-> CAP_PRES : HTTPS / JSON
+CAP_PRES -down-> CAP_APP : invoca interfaces\n<<Service>>
+CAP_PRES -right-> CAP_INFRA : autenticación\nautorización
+CAP_APP -down-> CAP_PERS : transacciones
+CAP_APP -down-> CAP_DOM : reglas de negocio
+CAP_APP -right-> CAP_DTO : serialización
+CAP_APP -right-> CAP_INFRA : permisos / errores
+CAP_PERS -down-> CAP_DOM : entidades JPA
+CAP_PERS -down-> DB : JDBC
+CAP_INFRA -down-> CAP_PERS : SecurityAccessService\nconsulta repos
+
+note right of CAP_DOM
+  **Principio:** el dominio no depende
+  de presentación, DTO ni Spring Web.
+end note
+
+note left of CAP_APP
+  **Patrones en aplicación:**
+  inyección de dependencias,
+  interfaces de servicio,
+  orquestación de casos de uso.
+end note
+
+@enduml

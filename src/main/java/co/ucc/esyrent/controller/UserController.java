@@ -38,6 +38,12 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @GetMapping("/tenants")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<List<UserResponse>> getTenants() {
+        return ResponseEntity.ok(userService.getTenants());
+    }
+
     @GetMapping("/{userId}")
     @PreAuthorize("@securityAccessService.canAccessUser(#userId, authentication)")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {

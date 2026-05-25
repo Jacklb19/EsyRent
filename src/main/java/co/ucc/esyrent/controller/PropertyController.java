@@ -1,5 +1,6 @@
 package co.ucc.esyrent.controller;
 
+import co.ucc.esyrent.domain.enums.PropertyStatus;
 import co.ucc.esyrent.dto.request.CreatePropertyRequest;
 import co.ucc.esyrent.dto.request.UpdatePropertyRequest;
 import co.ucc.esyrent.dto.response.PropertyResponse;
@@ -36,9 +37,17 @@ public class PropertyController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PropertyResponse>> getProperties(@RequestParam(required = false) Long ownerId) {
+    public ResponseEntity<List<PropertyResponse>> getProperties(
+            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) PropertyStatus status) {
+        if (ownerId != null && status != null) {
+            return ResponseEntity.ok(propertyService.getPropertiesByOwnerAndStatus(ownerId, status));
+        }
         if (ownerId != null) {
             return ResponseEntity.ok(propertyService.getPropertiesByOwner(ownerId));
+        }
+        if (status != null) {
+            return ResponseEntity.ok(propertyService.getPropertiesByStatus(status));
         }
         return ResponseEntity.ok(propertyService.getAllProperties());
     }

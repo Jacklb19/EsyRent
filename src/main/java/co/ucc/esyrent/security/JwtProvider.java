@@ -1,6 +1,7 @@
 package co.ucc.esyrent.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -46,10 +47,13 @@ public class JwtProvider {
     }
 
     public boolean validateToken(String token) {
-        extractClaims(token);
-        return true;
+        try {
+            extractClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
-
     private Claims extractClaims(String token) {
         return Jwts.parser()
                 .verifyWith((javax.crypto.SecretKey) signingKey)

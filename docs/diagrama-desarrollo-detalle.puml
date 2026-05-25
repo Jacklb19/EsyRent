@@ -1,0 +1,123 @@
+@startuml diagrama-desarrollo-detalle-esyrent
+' Vista detallada — componentes reales agrupados (sin listar métodos)
+
+title Diagrama de Componentes UML (Detalle)\nEsyRent Backend
+
+left to right direction
+skinparam shadowing false
+skinparam linetype polyline
+skinparam nodesep 25
+skinparam ranksep 30
+
+actor "Cliente\n(Angular)" as Cliente
+
+' ── Bloque 1: Entrada ────────────────────────────────────────────────────────
+package "Presentación" <<Layer>> #E3F2FD {
+  component "REST API\n(9 Controllers)" as REST <<Component>>
+  note bottom of REST
+    Auth · User · Property · Contract
+    Payment · Maintenance · Report
+    File · RentalApplication
+  end note
+}
+
+' ── Bloque 2: Seguridad ──────────────────────────────────────────────────────
+package "Seguridad" <<Layer>> #FFE0B2 {
+  component [ JWT + Filtros ] as JWT
+  component [ SecurityAccessService ] as SAS
+}
+
+' ── Bloque 3: Casos de uso ────────────────────────────────────────────────────
+package "Aplicación" <<Layer>> #E8F5E9 {
+
+  frame "Interfaces <<Interface>>" as SIF {
+    interface AuthService
+    interface UserService
+    interface PropertyService
+    interface ContractService
+    interface PaymentService
+    interface MaintenanceService
+    interface ReportService
+    interface RentalApplicationService
+    interface FileStorageService
+    interface EmailNotificationService
+  }
+
+  frame "Implementaciones" as SIM {
+    component AuthServiceImpl
+    component UserServiceImpl
+    component PropertyServiceImpl
+    component ContractServiceImpl
+    component PaymentServiceImpl
+    component MaintenanceServiceImpl
+    component ReportServiceImpl
+    component RentalApplicationServiceImpl
+    component FileStorageServiceImpl
+    component EmailNotificationServiceImpl
+  }
+
+  component [ Mappers ] as MAP
+  component [ ContractLifecycleJob ] as JOB
+}
+
+' ── Bloque 4: Datos ─────────────────────────────────────────────────────────
+package "Persistencia" <<Layer>> #ECEFF1 {
+  component [ Repositories JPA ] as REPO
+  database PostgreSQL as DB
+}
+
+package "DTO" <<Layer>> #F3E5F5 {
+  component [ request ] as DREQ
+  component [ response ] as DRES
+}
+
+package "Dominio" <<Layer>> #FFFDE7 {
+  component [ Entidades ] as ENT
+  component [ Value Objects ] as VO
+  component [ Enums ] as ENM
+  component [ State · Strategy · Factory ] as PAT
+}
+
+package "Errores" <<Layer>> #FFCCBC {
+  component [ GlobalExceptionHandler ] as GEH
+}
+
+' ── Flujo principal ──────────────────────────────────────────────────────────
+Cliente -right-> REST : <<HTTP>>
+REST ..> AuthService : <<use>>\n(cada controller\nusa su Service)
+REST ..> JWT
+REST ..> SAS
+
+AuthServiceImpl ..|> AuthService
+UserServiceImpl ..|> UserService
+PropertyServiceImpl ..|> PropertyService
+ContractServiceImpl ..|> ContractService
+PaymentServiceImpl ..|> PaymentService
+MaintenanceServiceImpl ..|> MaintenanceService
+ReportServiceImpl ..|> ReportService
+RentalApplicationServiceImpl ..|> RentalApplicationService
+FileStorageServiceImpl ..|> FileStorageService
+EmailNotificationServiceImpl ..|> EmailNotificationService
+
+AuthServiceImpl --> REPO
+PropertyServiceImpl --> ENT
+ContractServiceImpl --> PAT
+PaymentServiceImpl --> PAT
+RentalApplicationServiceImpl --> ENT
+MAP --> DRES
+MAP --> ENT
+REST --> DREQ
+REST --> DRES
+REPO --> ENT
+REPO --> DB
+SAS --> REPO
+GEH --> DRES
+JOB --> REPO
+JOB --> EmailNotificationService
+
+note bottom of PAT
+  ContractState / MaintenanceState
+  LateFeeStrategy / ContractFactory
+end note
+
+@enduml

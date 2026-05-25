@@ -1,0 +1,430 @@
+@startuml
+
+title Diagrama de Desarrollo (Clases UML) - EsyRent Backend
+
+top to bottom direction
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam packageStyle rectangle
+
+actor "Cliente Angular" as cliente
+
+package controller {
+
+  class AuthController {
+    -authService: AuthService
+    +login(LoginRequest): AuthResponse
+    +refresh(RefreshTokenRequest): AuthResponse
+  }
+
+  class UserController {
+    -userService: UserService
+    +createUser(CreateUserRequest): UserResponse
+    +getAllUsers(): List
+    +getTenants(): List
+    +getUserById(Long): UserResponse
+    +updateProfile(Long, UpdateProfileRequest): UserResponse
+  }
+
+  class PropertyController {
+    -propertyService: PropertyService
+    +createProperty(CreatePropertyRequest): PropertyResponse
+    +getProperties(Long, PropertyStatus): List
+    +getPropertyById(Long): PropertyResponse
+    +updateProperty(Long, UpdatePropertyRequest): PropertyResponse
+  }
+
+  class ContractController {
+    -contractService: ContractService
+    +createContract(CreateContractRequest): ContractResponse
+    +getContractById(Long): ContractResponse
+    +getContracts(Long, Long): List
+    +cancelContract(Long, CancelContractRequest): ContractResponse
+  }
+
+  class PaymentController {
+    -paymentService: PaymentService
+    +registerPayment(RegisterPaymentRequest): PaymentResponse
+    +getPaymentsByContract(Long): List
+  }
+
+  class MaintenanceController {
+    -maintenanceService: MaintenanceService
+    +createMaintenanceRequest(CreateMaintenanceRequest): MaintenanceResponse
+    +advanceStatus(Long): MaintenanceResponse
+    +getByContract(Long): List
+  }
+
+  class ReportController {
+    -reportService: ReportService
+    +generatePaymentReport(ReportFilter): List
+    +generateMonthlyIncomeReport(ReportFilter): List
+  }
+
+  class FileController {
+    -fileStorageService: FileStorageService
+    +upload(UploadFileRequest): FileResponse
+    +getFilesForProperty(Long): List
+    +getFilesForContract(Long): List
+    +getFilesForMaintenance(Long): List
+    +getFileContentById(Long): Resource
+    +getFileContent(String): Resource
+  }
+
+  class RentalApplicationController {
+    -rentalApplicationService: RentalApplicationService
+    +createApplication(CreateRentalApplicationRequest): RentalApplicationResponse
+    +getApplications(Long, Long): List
+    +getApplicationById(Long): RentalApplicationResponse
+    +approveApplication(Long, ApproveRentalApplicationRequest): RentalApplicationResponse
+    +rejectApplication(Long, RejectRentalApplicationRequest): RentalApplicationResponse
+    +cancelApplication(Long): RentalApplicationResponse
+  }
+}
+
+package service {
+
+  interface AuthService {
+    +login(LoginRequest): AuthResponse
+    +refreshToken(RefreshTokenRequest): AuthResponse
+  }
+
+  interface UserService {
+    +createUser(CreateUserRequest): UserResponse
+    +getUserById(Long): UserResponse
+    +getAllUsers(): List
+    +getTenants(): List
+    +updateProfile(Long, UpdateProfileRequest): UserResponse
+  }
+
+  interface PropertyService {
+    +createProperty(CreatePropertyRequest): PropertyResponse
+    +getPropertyById(Long): PropertyResponse
+    +getAllProperties(): List
+    +getPropertiesByOwner(Long): List
+    +getPropertiesByStatus(PropertyStatus): List
+    +updateProperty(Long, UpdatePropertyRequest): PropertyResponse
+  }
+
+  interface ContractService {
+    +createContract(CreateContractRequest): ContractResponse
+    +getContractById(Long): ContractResponse
+    +getContractsByTenant(Long): List
+    +getContractsByProperty(Long): List
+    +cancelContract(Long, CancelContractRequest): ContractResponse
+  }
+
+  interface PaymentService {
+    +registerPayment(RegisterPaymentRequest): PaymentResponse
+    +getPaymentsByContract(Long): List
+  }
+
+  interface MaintenanceService {
+    +createMaintenanceRequest(CreateMaintenanceRequest): MaintenanceResponse
+    +advanceStatus(Long): MaintenanceResponse
+    +getByContract(Long): List
+  }
+
+  interface ReportService {
+    +generatePaymentReport(ReportFilter): List
+    +generateMonthlyIncomeReport(ReportFilter): List
+  }
+
+  interface FileStorageService {
+    +upload(UploadFileRequest): FileResponse
+    +getFilesForProperty(Long): List
+    +getFilesForContract(Long): List
+    +getFilesForMaintenance(Long): List
+    +loadFileContent(String): FileDownload
+    +loadFileContentById(Long): FileDownload
+  }
+
+  interface RentalApplicationService {
+    +createApplication(CreateRentalApplicationRequest, Long): RentalApplicationResponse
+    +getApplicationById(Long): RentalApplicationResponse
+    +getApplicationsByTenant(Long): List
+    +getApplicationsByOwner(Long): List
+    +approveApplication(Long, ApproveRentalApplicationRequest): RentalApplicationResponse
+    +rejectApplication(Long, RejectRentalApplicationRequest): RentalApplicationResponse
+    +cancelApplication(Long, Long): RentalApplicationResponse
+  }
+
+  interface EmailNotificationService {
+    +sendContractCreatedNotification(Long): void
+    +sendContractExpiringNotification(Long): void
+    +sendPaymentRegisteredNotification(Long): void
+  }
+}
+
+package "service impl" {
+
+  class AuthServiceImpl
+  class UserServiceImpl
+  class PropertyServiceImpl
+  class ContractServiceImpl
+  class PaymentServiceImpl
+  class MaintenanceServiceImpl
+  class ReportServiceImpl
+  class FileStorageServiceImpl
+  class RentalApplicationServiceImpl
+  class EmailNotificationServiceImpl
+}
+
+package repository {
+
+  interface UserRepository {
+    +findByEmail(String): Optional
+    +findByRole(UserRole): List
+    +save(User): User
+  }
+
+  interface PropertyRepository {
+    +findByOwner(User): List
+    +findByStatus(PropertyStatus): List
+    +save(Property): Property
+  }
+
+  interface ContractRepository {
+    +findByTenant(User): List
+    +findByProperty(Property): List
+    +findByStatusIn(List): List
+    +existsByPropertyAndStatusIn(Property, List): boolean
+    +save(Contract): Contract
+  }
+
+  interface PaymentRepository {
+    +findByContract(Contract): List
+    +findByContractAndPaymentMonth(Contract, YearMonth): Optional
+    +save(Payment): Payment
+  }
+
+  interface MaintenanceRequestRepository {
+    +findByContract(Contract): List
+    +save(MaintenanceRequest): MaintenanceRequest
+  }
+
+  interface AttachmentRepository {
+    +findByProperty(Property): List
+    +findByMetadataStoragePath(String): Optional
+    +save(Attachment): Attachment
+  }
+
+  interface RefreshTokenRepository {
+    +findByToken(String): Optional
+    +save(RefreshToken): RefreshToken
+  }
+
+  interface RentalApplicationRepository {
+    +findByTenantOrderBySubmittedAtDesc(User): List
+    +findByPropertyOwnerOrderBySubmittedAtDesc(User): List
+    +existsByPropertyAndTenantAndStatus(Property, User, Status): boolean
+    +save(RentalApplication): RentalApplication
+  }
+}
+
+package security {
+
+  class SecurityAccessService {
+    +resolveCurrentUserId(Authentication): Long
+    +canCreateRentalApplication(Long, Authentication): boolean
+    +canReviewRentalApplication(Long, Authentication): boolean
+    +canAccessContract(Long, Authentication): boolean
+    +canRegisterPayment(Long, Authentication): boolean
+    +canAccessFileById(Long, Authentication): boolean
+    +canManageProperty(Long, Authentication): boolean
+  }
+
+  class JwtProvider {
+    +generateToken(Authentication): String
+    +generateToken(UserDetails): String
+    +validateToken(String): boolean
+    +getUsername(String): String
+  }
+
+  class JwtAuthFilter {
+    +doFilterInternal(): void
+  }
+}
+
+package scheduler {
+
+  class ContractLifecycleJob {
+    +runDailyTransition(): void
+    -transitionAll(LocalDate): void
+  }
+}
+
+package "domain entity" {
+
+  class User {
+    +updateProfile(String, String): void
+    +changePassword(String): void
+    +isAdmin(): boolean
+    +isOwner(): boolean
+    +isTenant(): boolean
+  }
+
+  class Property {
+    +updateDetails(String, BigDecimal, MoneyAmount, String): void
+    +markAsRented(): void
+    +markAsAvailable(): void
+    +isAvailable(): boolean
+  }
+
+  class Contract {
+    +transitionState(LocalDate): void
+    +cancel(CancellationDetails): void
+    +canRegisterPayment(): boolean
+    +setState(ContractState): void
+    +applyCancellation(CancellationDetails): void
+  }
+
+  class Payment {
+    +computeAndApplyLateFee(PaymentCutoff, MoneyAmount, LateFeeStrategy): void
+    +isLate(): boolean
+  }
+
+  class MaintenanceRequest {
+    +advance(): void
+    +canAdvance(): boolean
+    +setState(MaintenanceState): void
+  }
+
+  class RentalApplication {
+    +approve(Contract): void
+    +reject(String): void
+    +cancel(): void
+  }
+
+  class Attachment {
+    {static} +forProperty(Property, AttachmentMetadata): Attachment
+    {static} +forContract(Contract, AttachmentMetadata): Attachment
+    {static} +forMaintenance(MaintenanceRequest, AttachmentMetadata): Attachment
+  }
+
+  class RefreshToken {
+    +isExpired(): boolean
+    +isActive(): boolean
+    +revoke(): void
+  }
+}
+
+package "domain patterns" {
+
+  interface ContractState {
+    +onSchedulerTick(Contract, LocalDate): void
+    +cancel(Contract, CancellationDetails): void
+    +canRegisterPayment(): boolean
+    +getStatus(): ContractStatus
+  }
+
+  interface MaintenanceState {
+    +advance(MaintenanceRequest): void
+    +canAdvance(): boolean
+    +getStatus(): MaintenanceStatus
+  }
+
+  interface LateFeeStrategy {
+    +calculate(MoneyAmount, PaymentCutoff, LocalDate): MoneyAmount
+    +isApplicable(PaymentCutoff, LocalDate): boolean
+  }
+
+  class DailyRateLateFeeStrategy {
+    +calculate(MoneyAmount, PaymentCutoff, LocalDate): MoneyAmount
+    +isApplicable(PaymentCutoff, LocalDate): boolean
+  }
+
+  abstract class ContractFactory {
+    {abstract} +createContract(Property, User, LocalDate, Integer, MoneyAmount, PaymentCutoff, MoneyAmount): Contract
+    ~validateProperty(Property): void
+    ~validateTenant(User): void
+  }
+
+  class StandardContractFactory {
+    +createContract(Property, User, LocalDate, Integer, MoneyAmount, PaymentCutoff, MoneyAmount): Contract
+  }
+}
+
+database "PostgreSQL" as pg
+
+' Flujo principal
+cliente --> AuthController
+cliente --> UserController
+cliente --> PropertyController
+cliente --> ContractController
+cliente --> PaymentController
+cliente --> MaintenanceController
+cliente --> ReportController
+cliente --> FileController
+cliente --> RentalApplicationController
+
+AuthController --> AuthService
+UserController --> UserService
+PropertyController --> PropertyService
+ContractController --> ContractService
+PaymentController --> PaymentService
+MaintenanceController --> MaintenanceService
+ReportController --> ReportService
+FileController --> FileStorageService
+RentalApplicationController --> RentalApplicationService
+
+AuthServiceImpl ..|> AuthService
+UserServiceImpl ..|> UserService
+PropertyServiceImpl ..|> PropertyService
+ContractServiceImpl ..|> ContractService
+PaymentServiceImpl ..|> PaymentService
+MaintenanceServiceImpl ..|> MaintenanceService
+ReportServiceImpl ..|> ReportService
+FileStorageServiceImpl ..|> FileStorageService
+RentalApplicationServiceImpl ..|> RentalApplicationService
+EmailNotificationServiceImpl ..|> EmailNotificationService
+
+AuthServiceImpl --> UserRepository
+AuthServiceImpl --> RefreshTokenRepository
+PropertyServiceImpl --> PropertyRepository
+ContractServiceImpl --> ContractRepository
+PaymentServiceImpl --> PaymentRepository
+MaintenanceServiceImpl --> MaintenanceRequestRepository
+FileStorageServiceImpl --> AttachmentRepository
+RentalApplicationServiceImpl --> RentalApplicationRepository
+RentalApplicationServiceImpl --> ContractService
+
+UserRepository --> User
+PropertyRepository --> Property
+ContractRepository --> Contract
+PaymentRepository --> Payment
+MaintenanceRequestRepository --> MaintenanceRequest
+AttachmentRepository --> Attachment
+RefreshTokenRepository --> RefreshToken
+RentalApplicationRepository --> RentalApplication
+ContractRepository --> pg
+
+PropertyServiceImpl ..> Property
+ContractServiceImpl ..> Contract
+ContractServiceImpl ..> StandardContractFactory
+PaymentServiceImpl ..> Payment
+PaymentServiceImpl ..> DailyRateLateFeeStrategy
+MaintenanceServiceImpl ..> MaintenanceRequest
+RentalApplicationServiceImpl ..> RentalApplication
+
+Contract ..> ContractState
+MaintenanceRequest ..> MaintenanceState
+Payment ..> LateFeeStrategy
+DailyRateLateFeeStrategy ..|> LateFeeStrategy
+StandardContractFactory --|> ContractFactory
+
+User "1" o-- "0..*" Property
+Property "1" o-- "0..*" Contract
+Contract "1" o-- "0..*" Payment
+Contract "1" o-- "0..*" MaintenanceRequest
+RentalApplication --> Property
+RentalApplication --> User
+
+ContractLifecycleJob --> ContractRepository
+ContractLifecycleJob --> EmailNotificationService
+SecurityAccessService --> UserRepository
+SecurityAccessService --> PropertyRepository
+JwtAuthFilter ..> JwtProvider
+
+@enduml

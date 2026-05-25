@@ -21,4 +21,10 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
     List<Contract> findByEndDateBetween(LocalDate startDate, LocalDate endDate);
 
     boolean existsByPropertyAndStatusIn(Property property, List<ContractStatus> statuses);
+
+    boolean existsByPropertyAndTenantAndStatusIn(
+            Property property,
+            User tenant,
+            List<ContractStatus> statuses
+    );
 }
