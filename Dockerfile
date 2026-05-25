@@ -11,6 +11,7 @@ RUN chmod +x mvnw && ./mvnw -q -DskipTests package
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN addgroup -S spring && adduser -S spring -G spring
+RUN mkdir -p /app/uploads && chown -R spring:spring /app
 USER spring:spring
 COPY --from=build /app/target/esyrent-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080

@@ -9,12 +9,15 @@ import co.ucc.esyrent.dto.request.ReportFilter;
 import co.ucc.esyrent.dto.request.UploadFileRequest;
 import co.ucc.esyrent.domain.entity.Attachment;
 import co.ucc.esyrent.domain.enums.AttachmentType;
+import co.ucc.esyrent.domain.enums.ContractStatus;
+import co.ucc.esyrent.domain.enums.RentalApplicationStatus;
 import co.ucc.esyrent.repository.AttachmentRepository;
 import co.ucc.esyrent.repository.ContractRepository;
 import co.ucc.esyrent.repository.MaintenanceRequestRepository;
 import co.ucc.esyrent.repository.PropertyRepository;
 import co.ucc.esyrent.repository.RentalApplicationRepository;
 import co.ucc.esyrent.repository.UserRepository;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -185,8 +188,24 @@ public class SecurityAccessService {
         if (canManageProperty(propertyId, authentication)) {
             return true;
         }
-        return propertyRepository.findById(propertyId)
-                .map(Property::isAvailable)
+        Optional<Property> propertyOpt = propertyRepository.findById(propertyId);
+        if (propertyOpt.isEmpty()) {
+            return false;
+        }
+        Property property = propertyOpt.get();
+        if (property.isAvailable()) {
+            return true;
+        }
+        return userRepository.findByEmail(authentication.getName())
+                .map(user -> contractRepository.existsByPropertyAndTenantAndStatusIn(
+                        property,
+                        user,
+                        List.of(ContractStatus.ACTIVE, ContractStatus.EXPIRING_SOON)
+                ) || rentalApplicationRepository.existsByPropertyAndTenantAndStatus(
+                        property,
+                        user,
+                        RentalApplicationStatus.PENDING
+                ))
                 .orElse(false);
     }
 
@@ -262,7 +281,7 @@ public class SecurityAccessService {
         }
         AttachmentType type = attachment.getType();
         if (type == AttachmentType.PROPERTY_IMAGE && attachment.getProperty() != null) {
-            return canManageProperty(attachment.getProperty().getId(), authentication);
+            return true;
         }
         if (type == AttachmentType.CONTRACT_PDF && attachment.getContract() != null) {
             return canAccessContract(attachment.getContract().getId(), authentication);

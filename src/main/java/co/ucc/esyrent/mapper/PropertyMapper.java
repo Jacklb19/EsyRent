@@ -5,7 +5,7 @@ import co.ucc.esyrent.dto.response.PropertyResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {FileMapper.class})
 public interface PropertyMapper {
 
     @Mapping(target = "ownerId", source = "owner.id")

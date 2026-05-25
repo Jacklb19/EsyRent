@@ -5,5 +5,6 @@ public enum MaintenanceCategory {
     PLUMBING,
     STRUCTURAL,
     PAINTING,
+    CLEANING,
     OTHER
 }
