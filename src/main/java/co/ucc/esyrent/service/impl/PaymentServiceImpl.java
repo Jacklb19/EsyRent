@@ -49,7 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
                 new MoneyAmount(request.amount(), request.currency()).normalizeScale(),
                 request.paymentDate()
         );
-        payment.computeAndApplyLateFee(contract.getCutoff(), contract.getMonthlyRent(), lateFeeStrategy);
+        payment.computeAndApplyLateFee(contract.getCutoff(), contract.getMonthlyRent(), lateFeeStrategy, request.paymentMonth());
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 

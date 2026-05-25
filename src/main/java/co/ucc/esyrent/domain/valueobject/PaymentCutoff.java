@@ -26,8 +26,13 @@ public class PaymentCutoff {
         return day;
     }
 
-    public boolean isCutoffExceeded(LocalDate paymentDate) {
-        return paymentDate.isAfter(computeCutoffDateFor(YearMonth.from(paymentDate)));
+    public boolean isCutoffExceeded(LocalDate paymentDate, YearMonth paymentMonth) {
+        return paymentDate.isAfter(computeCutoffDateFor(paymentMonth));
+    }
+
+    public long computeLateDays(LocalDate paymentDate, YearMonth paymentMonth) {
+        LocalDate cutoffDate = computeCutoffDateFor(paymentMonth);
+        return java.time.temporal.ChronoUnit.DAYS.between(cutoffDate, paymentDate);
     }
 
     public LocalDate computeCutoffDateFor(YearMonth yearMonth) {

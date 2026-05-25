@@ -95,18 +95,18 @@ public class Payment extends BaseEntity {
         return lateFee;
     }
 
-    public void computeAndApplyLateFee(PaymentCutoff cutoff, MoneyAmount monthlyRent, LateFeeStrategy strategy) {
-        if (strategy == null) {
-            throw new IllegalArgumentException("Late fee strategy cannot be null");
-        }
-        if (strategy.isApplicable(cutoff, paymentDate)) {
-            lateFee = strategy.calculate(monthlyRent, cutoff, paymentDate);
-            status = PaymentStatus.LATE;
-            return;
-        }
-        lateFee = null;
-        status = PaymentStatus.ON_TIME;
-    }
+     public void computeAndApplyLateFee(PaymentCutoff cutoff, MoneyAmount monthlyRent, LateFeeStrategy strategy, YearMonth paymentMonth) {
+         if (strategy == null) {
+             throw new IllegalArgumentException("Late fee strategy cannot be null");
+         }
+         if (strategy.isApplicable(cutoff, paymentDate, paymentMonth)) {
+             lateFee = strategy.calculate(monthlyRent, cutoff, paymentDate, paymentMonth);
+             status = PaymentStatus.LATE;
+             return;
+         }
+         lateFee = null;
+         status = PaymentStatus.ON_TIME;
+     }
 
     public boolean isLate() {
         return status == PaymentStatus.LATE;
