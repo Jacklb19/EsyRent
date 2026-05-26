@@ -16,6 +16,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.ucc.esyrent.service.EmailNotificationService;
+
 @Service
 @Transactional(readOnly = true)
 public class PaymentServiceImpl implements PaymentService {
@@ -24,13 +26,16 @@ public class PaymentServiceImpl implements PaymentService {
     private final ContractRepository contractRepository;
     private final PaymentMapper paymentMapper;
     private final LateFeeStrategy lateFeeStrategy;
+    private final EmailNotificationService emailNotificationService;
 
     public PaymentServiceImpl(PaymentRepository paymentRepository, ContractRepository contractRepository,
-                              PaymentMapper paymentMapper, LateFeeStrategy lateFeeStrategy) {
+                              PaymentMapper paymentMapper, LateFeeStrategy lateFeeStrategy,
+                              EmailNotificationService emailNotificationService) {
         this.paymentRepository = paymentRepository;
         this.contractRepository = contractRepository;
         this.paymentMapper = paymentMapper;
         this.lateFeeStrategy = lateFeeStrategy;
+        this.emailNotificationService = emailNotificationService;
     }
 
     @Override
@@ -50,7 +55,9 @@ public class PaymentServiceImpl implements PaymentService {
                 request.paymentDate()
         );
         payment.computeAndApplyLateFee(contract.getCutoff(), contract.getMonthlyRent(), lateFeeStrategy, request.paymentMonth());
-        return paymentMapper.toResponse(paymentRepository.save(payment));
+        Payment savedPayment = paymentRepository.save(payment);
+        emailNotificationService.sendPaymentRegisteredNotification(savedPayment.getId());
+        return paymentMapper.toResponse(savedPayment);
     }
 
     @Override

@@ -12,6 +12,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,12 +23,15 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
     private final JavaMailSender mailSender;
     private final ContractRepository contractRepository;
     private final PaymentRepository paymentRepository;
+    private final String frontendUrl;
 
     public EmailNotificationServiceImpl(JavaMailSender mailSender, ContractRepository contractRepository,
-                                        PaymentRepository paymentRepository) {
+                                        PaymentRepository paymentRepository,
+                                        @Value("${app.frontend-url}") String frontendUrl) {
         this.mailSender = mailSender;
         this.contractRepository = contractRepository;
         this.paymentRepository = paymentRepository;
+        this.frontendUrl = frontendUrl;
     }
 
     @Override
@@ -61,6 +65,16 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                         + " por valor de " + payment.getAmount().getAmount() + " "
                         + payment.getAmount().getCurrency() + "."
         );
+    }
+
+    @Override
+    public void sendPasswordResetNotification(String email, String token) {
+        String resetUrl = frontendUrl + "/reset-password?token=" + token;
+        String message = "Recibimos una solicitud para restablecer tu contraseña en EsyRent.\n\n"
+                + "Para restablecer tu contraseña, haz clic en el siguiente enlace:\n"
+                + resetUrl + "\n\n"
+                + "Este enlace expirará en 1 hora. Si no solicitaste esto, puedes ignorar este correo.";
+        sendEmail(email, "EsyRent - Restablecer contraseña", message);
     }
 
     private Contract findContractById(Long contractId) {

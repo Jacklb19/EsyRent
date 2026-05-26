@@ -7,4 +7,6 @@ public interface EmailNotificationService {
     void sendContractExpiringNotification(Long contractId);
 
     void sendPaymentRegisteredNotification(Long paymentId);
+
+    void sendPasswordResetNotification(String email, String token);
 }

@@ -22,6 +22,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.ucc.esyrent.service.EmailNotificationService;
+
 @Service
 @Transactional(readOnly = true)
 public class ContractServiceImpl implements ContractService {
@@ -36,15 +38,17 @@ public class ContractServiceImpl implements ContractService {
     private final UserRepository userRepository;
     private final ContractFactory contractFactory;
     private final ContractMapper contractMapper;
+    private final EmailNotificationService emailNotificationService;
 
     public ContractServiceImpl(ContractRepository contractRepository, PropertyRepository propertyRepository,
                                UserRepository userRepository, ContractFactory contractFactory,
-                               ContractMapper contractMapper) {
+                               ContractMapper contractMapper, EmailNotificationService emailNotificationService) {
         this.contractRepository = contractRepository;
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
         this.contractFactory = contractFactory;
         this.contractMapper = contractMapper;
+        this.emailNotificationService = emailNotificationService;
     }
 
     @Override
@@ -66,7 +70,9 @@ public class ContractServiceImpl implements ContractService {
                 new PaymentCutoff(request.cutoffDay()),
                 new MoneyAmount(request.depositAmount(), request.depositCurrency()).normalizeScale()
         );
-        return contractMapper.toResponse(contractRepository.save(contract));
+        Contract savedContract = contractRepository.save(contract);
+        emailNotificationService.sendContractCreatedNotification(savedContract.getId());
+        return contractMapper.toResponse(savedContract);
     }
 
     @Override

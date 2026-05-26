@@ -21,6 +21,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.ucc.esyrent.dto.request.ForgotPasswordRequest;
+import co.ucc.esyrent.dto.request.ResetPasswordRequest;
+import co.ucc.esyrent.service.EmailNotificationService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.UUID;
+
 @Service
 @Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
@@ -33,11 +39,14 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserDetailsServiceImpl userDetailsService;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailNotificationService emailNotificationService;
     private final long refreshExpirationMillis;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager, JwtProvider jwtProvider,
                            UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
                            UserDetailsServiceImpl userDetailsService, UserMapper userMapper,
+                           PasswordEncoder passwordEncoder, EmailNotificationService emailNotificationService,
                            @org.springframework.beans.factory.annotation.Value("${jwt.refresh-expiration}") long refreshExpirationMillis) {
         this.authenticationManager = authenticationManager;
         this.jwtProvider = jwtProvider;
@@ -45,6 +54,8 @@ public class AuthServiceImpl implements AuthService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userDetailsService = userDetailsService;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.emailNotificationService = emailNotificationService;
         this.refreshExpirationMillis = refreshExpirationMillis;
     }
 
@@ -95,5 +106,35 @@ public class AuthServiceImpl implements AuthService {
         byte[] bytes = new byte[64];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User with email " + request.email() + " was not found"));
+
+        String token = UUID.randomUUID().toString();
+        user.setResetToken(token, LocalDateTime.now().plusHours(1));
+        userRepository.save(user);
+
+        emailNotificationService.sendPasswordResetNotification(user.getEmail(), token);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByResetToken(request.token())
+                .orElseThrow(() -> new BusinessRuleException("El token es inválido o no existe"));
+
+        if (user.getResetTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            user.clearResetToken();
+            userRepository.save(user);
+            throw new BusinessRuleException("El token ha expirado");
+        }
+
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
+        user.clearResetToken();
+        userRepository.save(user);
     }
 }

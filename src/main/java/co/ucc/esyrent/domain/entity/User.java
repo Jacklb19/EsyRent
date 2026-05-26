@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 public class User extends BaseEntity {
@@ -33,6 +35,12 @@ public class User extends BaseEntity {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "reset_token_expires_at")
+    private LocalDateTime resetTokenExpiresAt;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Property> properties = new ArrayList<>();
 
@@ -40,6 +48,24 @@ public class User extends BaseEntity {
     private List<Contract> contracts = new ArrayList<>();
 
     protected User() {
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public LocalDateTime getResetTokenExpiresAt() {
+        return resetTokenExpiresAt;
+    }
+
+    public void setResetToken(String resetToken, LocalDateTime expiresAt) {
+        this.resetToken = resetToken;
+        this.resetTokenExpiresAt = expiresAt;
+    }
+
+    public void clearResetToken() {
+        this.resetToken = null;
+        this.resetTokenExpiresAt = null;
     }
 
     public User(String fullName, String email, String password, String phone, UserRole role) {
